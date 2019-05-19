@@ -6,12 +6,17 @@
  * User Manual available at https://docs.gradle.org/5.4.1/userguide/tutorial_java_projects.html
  */
 
+
 plugins {
     // Apply the java plugin to add support for Java
     id 'java'
-
+    id 'org.openjfx.javafxplugin' version '0.0.7'
     // Apply the application plugin to add support for building an application
     id 'application'
+}
+
+javafx {
+    modules = [ 'javafx.controls' ]
 }
 
 repositories {

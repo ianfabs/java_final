@@ -3,34 +3,78 @@
  */
 package java_final_classes;
 
-import java.io.FileInputStream;
-import java.io.ObjectInputStream;
-import java.io.Serializable;
+import javafx.event.ActionEvent;
+import javafx.event.Event;
+import javafx.event.EventHandler;
 
-public class App {
+import java.util.Arrays;
+
+import javafx.application.Application;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.ChoiceBox;
+import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
+import javafx.scene.control.RadioButton;
+import javafx.scene.control.SelectionMode;
+import javafx.scene.control.TextField;
+import javafx.scene.control.ToggleGroup;
+import javafx.scene.layout.ColumnConstraints;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
+import javafx.stage.Stage;
+
+public class App extends Application {
+    @Override
+    public void start(Stage stage) {
+      // Set Window title
+      stage.setTitle("Pizza Cataloger");
+      
+      // Grid
+      GridPane grid = new GridPane();
+      ColumnConstraints column1 = new ColumnConstraints(100,100,Double.MAX_VALUE);
+      ColumnConstraints column2 = new ColumnConstraints(100);
+      grid.getColumnConstraints().addAll(column1, column2);
+      grid.setTranslateX(20);
+      grid.setTranslateY(20);
+
+      //Pizza name input
+      TextField nameField = new TextField();
+      grid.addRow(0, new Label("Name of Pizza: "), nameField);
+      
+      //Pizza toppings input
+      ListView<String> listView = new ListView<String>();
+      ObservableList<String> list = FXCollections.observableArrayList();
+      listView.setItems(list);
+      list.addAll( Arrays.stream(Topping.values()).map(Enum::name).toArray(String[]::new) );
+      listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+      listView.setOnMouseClicked(new EventHandler<Event>() {
+        @Override
+        public void handle(Event event) {
+            ObservableList<String> selectedItems =  listView.getSelectionModel().getSelectedItems();
+            for(String s : selectedItems){
+                System.out.println("selected item " + s);
+            }
+        }
+
+    });
+      grid.addRow(1, new Label("Toppings: "), listView);
+
+      //set the scene
+      var scene = new Scene(new StackPane(grid), 640, 480);
+      stage.setScene(scene);
+      stage.show();
+    }
+
     public static void main(String[] args) {
-      Pizza med_plain = new Pizza(Size.M);
-      System.out.println(med_plain.size+"("+med_plain.size.getInches()+")");
+      //PizzaDB db = new PizzaDB("pizza.dat");
+      //Pizza ian = new Pizza(Size.L);
+      //db.addPizza(ian);
+      //System.out.println(ian.size+"("+ian.size.getInches()+")");
+      //System.out.println( "Pizzas: " + db.getPizzas().get(0).size.getInches() );
+      launch();
     }
-}
-
-class PizzaDB {
-  private Pizza[] set = new Pizza[]{};
-  private String file;
-  public PizzaDB(String name) {
-    // Name is the DB name AKA the file name
-    this.file = name;
-  }
-
-  private void refreshSet() {
-    try {
-      FileInputStream fileStream = new FileInputStream(this.file);
-      ObjectInputStream inputStream = new ObjectInputStream ( fileStream );	           
-      Pizza [] pizzas = (Pizza[]) inputStream.readObject();
-      this.set = pizzas;
-	    inputStream.close();
-    } catch(Exception err) {
-      System.out.println("Error: " + err);
-    }
-  }
 }
