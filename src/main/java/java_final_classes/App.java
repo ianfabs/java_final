@@ -3,13 +3,34 @@
  */
 package java_final_classes;
 
-public class App {
-    public String getGreeting() {
-        return "Hello world.";
-    }
+import java.io.FileInputStream;
+import java.io.ObjectInputStream;
+import java.io.Serializable;
 
+public class App {
     public static void main(String[] args) {
-      Pie med_plain = new Pie(Size.M); 
-      System.out.println(med_plain.size);
+      Pizza med_plain = new Pizza(Size.M);
+      System.out.println(med_plain.size+"("+med_plain.size.getInches()+")");
     }
+}
+
+class PizzaDB {
+  private Pizza[] set = new Pizza[]{};
+  private String file;
+  public PizzaDB(String name) {
+    // Name is the DB name AKA the file name
+    this.file = name;
+  }
+
+  private void refreshSet() {
+    try {
+      FileInputStream fileStream = new FileInputStream(this.file);
+      ObjectInputStream inputStream = new ObjectInputStream ( fileStream );	           
+      Pizza [] pizzas = (Pizza[]) inputStream.readObject();
+      this.set = pizzas;
+	    inputStream.close();
+    } catch(Exception err) {
+      System.out.println("Error: " + err);
+    }
+  }
 }
