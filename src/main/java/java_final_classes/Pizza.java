@@ -3,10 +3,9 @@ package java_final_classes;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
 
 public class Pizza implements Serializable {
+  private static final long serialVersionUID = -1123329175878415802L;
   public String name = "";
   public ArrayList<Topping> toppings = new ArrayList<Topping>();
   public Size size = Size.M;
@@ -22,6 +21,10 @@ public class Pizza implements Serializable {
     this.name = n;
   }
   public Pizza(Size s) {
+    this.size = s;
+  }
+  public Pizza(String n, Size s) {
+    this.name = n;
     this.size = s;
   }
   public Pizza(Topping[] ts) {

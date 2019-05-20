@@ -45,7 +45,20 @@ public class PizzaDB {
     }
   
     public void addPizza(Pizza za) {
+      this.refreshSet();
       this.set.add(za);
+      this.updateBinary();
+    }
+
+    public void deletePizza(int index) {
+      this.refreshSet();
+      this.set.remove(index);
+      this.updateBinary();
+    }
+
+    public void deletePizza(Pizza za) {
+      this.refreshSet();
+      this.set.remove(za);
       this.updateBinary();
     }
 

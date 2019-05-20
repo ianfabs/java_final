@@ -6,75 +6,205 @@ package java_final_classes;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.event.EventHandler;
+import javafx.geometry.Insets;
 
 import java.util.Arrays;
+import java.util.stream.Collectors;
 
 import javafx.application.Application;
+import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
-import javafx.scene.control.RadioButton;
 import javafx.scene.control.SelectionMode;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
+import javafx.scene.control.TableCell;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
-import javafx.scene.control.ToggleGroup;
+import javafx.scene.control.TreeTableColumn.CellDataFeatures;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
+import javafx.stage.Popup;
 import javafx.stage.Stage;
+import javafx.stage.PopupWindow.AnchorLocation;
+import javafx.util.Callback;
 
 public class App extends Application {
-    @Override
-    public void start(Stage stage) {
-      // Set Window title
-      stage.setTitle("Pizza Cataloger");
-      
-      // Grid
-      GridPane grid = new GridPane();
-      ColumnConstraints column1 = new ColumnConstraints(100,100,Double.MAX_VALUE);
-      ColumnConstraints column2 = new ColumnConstraints(100);
-      grid.getColumnConstraints().addAll(column1, column2);
-      grid.setTranslateX(20);
-      grid.setTranslateY(20);
+  public static final ObservableList<Topping> toppingsList = FXCollections
+      .observableArrayList(Arrays.stream(Topping.values()).toArray(Topping[]::new));
+  public static final ObservableList<Size> sizeList = FXCollections
+      .observableArrayList(Arrays.stream(Size.values()).toArray(Size[]::new));
+  public static final PizzaDB db = new PizzaDB("pizza.dat");
+  @Override
+  public void start(Stage stage) {
+    //Pizza ian = new Pizza("Large Plain Cheese", Size.L);
+    //db.addPizza(ian);
 
-      //Pizza name input
-      TextField nameField = new TextField();
-      grid.addRow(0, new Label("Name of Pizza: "), nameField);
-      
-      //Pizza toppings input
-      ListView<String> listView = new ListView<String>();
-      ObservableList<String> list = FXCollections.observableArrayList();
-      listView.setItems(list);
-      list.addAll( Arrays.stream(Topping.values()).map(Enum::name).toArray(String[]::new) );
-      listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-      listView.setOnMouseClicked(new EventHandler<Event>() {
-        @Override
-        public void handle(Event event) {
-            ObservableList<String> selectedItems =  listView.getSelectionModel().getSelectedItems();
-            for(String s : selectedItems){
-                System.out.println("selected item " + s);
-            }
+    // Set Window title
+    stage.setTitle("Pizza Cataloger");
+    TabPane tabPane = new TabPane();
+
+    // Grid
+    GridPane grid = new GridPane();
+    ColumnConstraints column1 = new ColumnConstraints(100, 100, Double.MAX_VALUE);
+    ColumnConstraints column2 = new ColumnConstraints(200);
+    grid.getColumnConstraints().addAll(column1, column2);
+    grid.setTranslateX(20);
+    grid.setTranslateY(20);
+    Tab createPizza = new Tab("Create Pizza", grid);
+
+    // Pizza name input
+    TextField nameField = new TextField();
+    grid.addRow(0, new Label("Name of Pizza: "), nameField);
+
+    // Pizza toppings input
+    ListView<Topping> listView = new ListView<Topping>();
+    listView.setItems(App.toppingsList);
+
+    listView.setPrefHeight(App.toppingsList.size() * 24 + 2);
+    listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+    listView.setOnMouseClicked(new EventHandler<Event>() {
+      @Override
+      public void handle(Event event) {
+        for (Topping s : listView.getSelectionModel().getSelectedItems()) {
+          System.out.println("selected item " + s.toString());
         }
-
+      }
     });
-      grid.addRow(1, new Label("Toppings: "), listView);
+    grid.addRow(2, new Label("Toppings: "), listView);
+
+    // Pizza size selector
+    ChoiceBox<Size> sizeBox = new ChoiceBox<Size>();
+    sizeBox.setItems(sizeList);
+    sizeBox.setValue(Size.M);
+    grid.addRow(1, new Label("Size: "), sizeBox);
+
+    // Pizza size selector
+    Button btnCreate = new Button("Create Pizza");
+    Popup popup = new Popup();
+    Label popupText = new Label("Your pizza has been saved!");
+    popupText.setStyle(" -fx-background-color: white;");
+    popup.getContent().add(popupText);
+    popup.setAutoHide(true);
+
+    btnCreate.setOnAction(new EventHandler<ActionEvent>() {
+      @Override
+        public void handle(ActionEvent e) {
+          if (!popup.isShowing()) {
+            popup.show(stage);
+            Pizza newPizza = new Pizza(nameField.getText(), sizeBox.getValue(), listView.getSelectionModel().getSelectedItems().toArray(Topping[]::new));
+            System.out.println("Pizza name: "+ newPizza.name);
+            System.out.println("Pizza size: "+ newPizza.size);
+            System.out.println("Pizza toppings: ");
+            for(Topping t : newPizza.toppings) {
+              System.out.println(""+t.toString());
+            }
+            db.addPizza(newPizza);
+          }
+		    }
+		  });
+      grid.addRow(3, btnCreate);
+      GridPane.setColumnSpan(btnCreate, 2);
+
+      //===========================================================================================
+      
+      //GridPane pizzaTableGrid = new GridPane();
+      // ColumnConstraints column = new ColumnConstraints(200);
+      // pizzaTableGrid.getColumnConstraints().addAll(column1);
+      TableView<Pizza> zaTable = new TableView<Pizza>();
+      ObservableList<Pizza> zas = FXCollections.observableArrayList(db.getPizzas().toArray(Pizza[]::new));
+      zaTable.setItems(zas);
+
+      TableColumn<Pizza,String> nameCol = new TableColumn<Pizza,String>("Name");
+      nameCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().name));
+      TableColumn<Pizza,String> sizeCol = new TableColumn<Pizza,String>("Size");
+      sizeCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().size.toString()));
+      TableColumn<Pizza,String> toppingsCol = new TableColumn<Pizza,String>("Toppings");
+      toppingsCol.setCellValueFactory( cellData -> new SimpleStringProperty( String.join(",", (cellData.getValue().toppings).stream().map(Topping::toString).toArray(String[]::new)) ) );
+      TableColumn<Pizza,String> priceCol = new TableColumn<Pizza,String>("Price");
+      priceCol.setCellValueFactory(cellData -> new SimpleStringProperty(String.format("%.2f", cellData.getValue().getCost())) );
+
+      zaTable.getColumns().setAll(nameCol, sizeCol, toppingsCol, priceCol);
+
+      addButtonToTable(zaTable);
+
+      Tab allPizzas = new Tab("All Pizzas", zaTable);
+      allPizzas.setOnSelectionChanged(event -> {
+        if (allPizzas.isSelected()) {
+            System.out.println("Tab is Selected");
+            ObservableList<Pizza> nzas = FXCollections.observableArrayList(db.getPizzas().toArray(Pizza[]::new));
+            zaTable.setItems(nzas);
+        }
+      });
+
+      //===========================================================================================
 
       //set the scene
-      var scene = new Scene(new StackPane(grid), 640, 480);
+      for(Node child : grid.getChildren()) {
+        GridPane.setMargin(child, new Insets(10,0,0,0));
+      }
+      tabPane.getTabs().addAll(createPizza, allPizzas);
+      var scene = new Scene(new StackPane(tabPane), 640, 480);
       stage.setScene(scene);
       stage.show();
     }
 
     public static void main(String[] args) {
-      //PizzaDB db = new PizzaDB("pizza.dat");
+      //
       //Pizza ian = new Pizza(Size.L);
       //db.addPizza(ian);
       //System.out.println(ian.size+"("+ian.size.getInches()+")");
       //System.out.println( "Pizzas: " + db.getPizzas().get(0).size.getInches() );
       launch();
     }
+
+    private void addButtonToTable(TableView table) {
+      TableColumn<Node, Void> colBtn = new TableColumn("Actions");
+
+      Callback<TableColumn<Node, Void>, TableCell<Node, Void>> cellFactory = new Callback<TableColumn<Node, Void>, TableCell<Node, Void>>() {
+          @Override
+          public TableCell<Node, Void> call(final TableColumn<Node, Void> param) {
+              final TableCell<Node, Void> cell = new TableCell<Node, Void>() {
+
+                  private final Button btn = new Button("Delete");
+
+                  {
+                      btn.setOnAction((ActionEvent event) -> {
+                          db.deletePizza(getIndex());
+                          ObservableList<Pizza> nzas = FXCollections.observableArrayList(db.getPizzas().toArray(Pizza[]::new));
+                          table.setItems(nzas);
+                          System.out.println("deleted pizza: " + getIndex());
+                      });
+                  }
+
+                  @Override
+                  public void updateItem(Void item, boolean empty) {
+                      super.updateItem(item, empty);
+                      if (empty) {
+                          setGraphic(null);
+                      } else {
+                          setGraphic(btn);
+                      }
+                  }
+              };
+              return cell;
+          }
+      };
+
+      colBtn.setCellFactory(cellFactory);
+
+      table.getColumns().add(colBtn);
+  }
 }
+

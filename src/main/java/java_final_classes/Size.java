@@ -21,5 +21,9 @@ public enum Size {
 
     public double getCost() { 
       return this.cost;
-  }
+    }
+
+    public String toString() {
+      return this.name();
+    }
   }

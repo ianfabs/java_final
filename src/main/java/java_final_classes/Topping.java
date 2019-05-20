@@ -20,4 +20,8 @@ public enum Topping {
     public double getCost() {
       return this.cost;
     }
+
+    public String toString() {
+      return this.name();
+    }
   }
